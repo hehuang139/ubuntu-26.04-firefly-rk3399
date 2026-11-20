@@ -17,19 +17,9 @@ docker build -t firefly-ubuntu26-builder:local .
 
 组装时同时检查引导件哈希、分区表、完整分区回读、ext4、启动菜单、内核和 initrd、实际选中的 DTB、发行版和 GNOME 会话。内核和 initramfs 更新钩子重新核对 DTB；新 DTB 不合格时保留已验证的启动菜单。`scripts/test-vsel-update.sh` 使用实际安装的本板 DTB、ARM64 内核和 initrd 测试旧 `0/1` 配置，覆盖 TF、eMMC、内核更新、回退和拒绝不匹配设备树的路径。
 
-## 复跑 eMMC 的启动检查
+## 测试版验证
 
-使用 [QEMU 10.2.0 的 Firefly 板级模型](https://github.com/hehuang139/openwrt-firefly-rk3399/tree/f486575d9b4ffb8be310487e8c123b569d03af00/source/qemu)，按其中的步骤构建 `qemu-system-aarch64`，再用同目录的 `firefly-rk3399.dts` 编译模拟器专用 DTB（`dtc -I dts -O dtb -o firefly-rk3399-qemu.dtb firefly-rk3399.dts`）。在本项目根目录运行，替换三个输入路径；宿主机需要 Python 3、`debugfs`、`gzip` 和足够的临时磁盘空间：
-
-```sh
-python3 scripts/qemu-smoke.py \
-  --qemu /path/to/qemu-system-aarch64 \
-  --model-dtb /path/to/firefly-rk3399-qemu.dtb \
-  --image /path/to/firefly-rk3399-ubuntu-26.04.1-gnome-arm64-emmc-test1.img.gz \
-  --kernel-release 7.0.0-44-generic --work work/qemu-check --timeout 300
-```
-
-创建新目录作为 `--work` 的父目录（例如 `mkdir -p work`），目标目录本身须不存在。验证从发布镜像读取 extlinux、内核和 initramfs，以模拟器 DTB 直接启动 Linux，在虚拟 eMMC 上检查 6 核、根分区挂载和串口登录提示，结果写到 `validation.json`。实板引导链与 HDMI 要在 Firefly 上验收。
+发布附件包含两种镜像的整盘回读检查、实际加载的设备树校验以及内核与 initramfs 更新钩子的测试记录。TF 与 eMMC 上的实板冷启动、HDMI、输入和网络请按下文逐项验收。
 
 ## 启动与安装
 
